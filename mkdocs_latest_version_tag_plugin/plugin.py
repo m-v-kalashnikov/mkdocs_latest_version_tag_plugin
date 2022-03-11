@@ -12,7 +12,6 @@ class GitLatestVersionTagPlugin(BasePlugin):
         self.repo: Repo | None = None
 
     def on_page_markdown(self, markdown, page, *args, **kwargs):
-        print(page.file.abs_src_path)
         latest_version_tag = self.get_latest_version_tag(page.file.abs_src_path)
         template = Template(markdown, undefined=DebugUndefined)
         return template.render({'git_latest_version_tag': latest_version_tag})
