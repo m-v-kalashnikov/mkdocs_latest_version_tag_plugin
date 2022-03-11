@@ -7,8 +7,8 @@ authors = [
 ]
 license-expression = "MIT"
 dependencies = [
-    "GitPython>=3.1.27",
     "mkdocs>=1.2.3",
+    "httpx>=0.22.0",
 ]
 requires-python = ">=3.10"
 

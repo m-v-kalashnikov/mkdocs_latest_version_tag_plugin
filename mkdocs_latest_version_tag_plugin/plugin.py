@@ -1,40 +1,20 @@
 from mkdocs.plugins import BasePlugin
-from git import Git, Repo
 from jinja2 import Template, DebugUndefined
-
-import re
+import httpx
 
 
 class GitLatestVersionTagPlugin(BasePlugin):
 
-    def __init__(self) -> None:
-        self.git: Git = Git()
-        self.repo: Repo | None = None
-
-    def on_page_markdown(self, markdown, page, *args, **kwargs):
-        latest_version_tag = self.get_latest_version_tag(page.file.abs_src_path)
+    def on_page_markdown(self, markdown, *, config, **kwargs):
+        latest_version_tag = self.get_latest_version_tag(config)
         template = Template(markdown, undefined=DebugUndefined)
         return template.render({'git_latest_version_tag': latest_version_tag})
 
-    def get_latest_version_tag(self, page_path: str):
+    @staticmethod
+    def get_latest_version_tag(config):
         """ Function to get the latest tag from the git repository which matches
         the configured regex for the version tag format."""
+        repo_name = config.get("repo_name", None)
+        assert repo_name is not None
 
-        self.repo = Repo(page_path, search_parent_directories=True)
-        assert not self.repo.bare
-
-        matching_tags = list()
-
-        for tag in self.repo.tags:
-            pattern = r"v\d+\.\d+\.\d+"
-            regex = re.compile(pattern)
-            result: re.Match | None = regex.search(tag.name)
-
-            if isinstance(result, re.Match):
-                matching_tags.append(result.group())
-
-        if len(matching_tags):
-            matching_tags.sort()
-            return matching_tags.pop()
-
-        return "unknown"
+        return httpx.get(f"https://api.github.com/repos/{repo_name}/releases/latest").json().get("tag_name", "unknown")
